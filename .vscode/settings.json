@@ -1,0 +1,14 @@
+{
+    "cSpell.words": [
+        "Karnaugh",
+        "linalg",
+        "ndarray",
+        "openfermion",
+        "qubit",
+        "qubits",
+        "scipy"
+    ],
+    "python.linting.enabled": true,
+    "python.linting.mypyEnabled": false,
+    "python.linting.flake8Enabled": true,
+}
