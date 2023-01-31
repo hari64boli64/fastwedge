@@ -4,7 +4,6 @@ from numba import jit
 from tqdm.notebook import tqdm
 from typing import List, Tuple, Union
 from itertools import product, combinations, permutations
-from openfermion.linalg import generate_parity_permutations
 
 
 @jit
@@ -65,10 +64,10 @@ def __my_generate_fixed_parity_permutations(N: int
             for perm in permutations(range(N))]
 
 
-def __my_generate_parity_permutations(seq: Tuple[int, ...],
-                                      fixed_parity_perms: List[Tuple[
-                                          Tuple[int, ...], int]]
-                                      ) -> List[Tuple[List[int], int]]:
+def __generate_parity_permutations(seq: Tuple[int, ...],
+                                   fixed_parity_perms: List[Tuple[
+                                       Tuple[int, ...], int]]
+                                   ) -> List[Tuple[List[int], int]]:
     """Enumerate all permutaion of seq and its sign
     using the precalculation result.
 
@@ -195,41 +194,40 @@ def fast_wedge(left_tensor: np.ndarray,
     right_tensor_list = right_tensor.flatten().tolist()
 
     # 符号や順列などについての事前計算
-    fixed_parity_perms = __my_generate_fixed_parity_permutations(N)
-    fixed_partial_perms = __generate_fixed_partial_perms(N, p)
+    fixed_N = __my_generate_fixed_parity_permutations(N)
+    fixed_q = __my_generate_fixed_parity_permutations(q)
+    fixed_Np = __generate_fixed_partial_perms(N, p)
 
     # right_tensorについての事前計算
     fixed_right_dict = dict()
     for iq in combinations(range(Q), q):
         for jq in combinations(range(Q), q):
             right = 0
-            for (niq, iq_parity) in generate_parity_permutations(list(iq)):
-                for (njq, jq_parity) in generate_parity_permutations(list(jq)):
+            for niq, parity1 in __generate_parity_permutations(iq,
+                                                               fixed_q):
+                for njq, parity2 in __generate_parity_permutations(jq,
+                                                                   fixed_q):
                     right += right_tensor_list[__getIdx(Q, *niq, *njq)] * \
-                        iq_parity*jq_parity
+                        parity1*parity2
             fixed_right_dict[__getIdx(Q, *iq, *jq)] = right
 
-    # TODO: Q<p+q
+    # TODO: Q < p+q
     for ipiq, jpjq in tqdm(product(combinations(range(Q), p+q),
                                    combinations(range(Q), p+q)),
                            total=(math.comb(Q, p+q)**2)):
-        parity_ipiq = __my_generate_parity_permutations(
-            ipiq, fixed_parity_perms)
-        parity_jpjq = __my_generate_parity_permutations(
-            jpjq, fixed_parity_perms)
+        parity_ipiq = __generate_parity_permutations(ipiq, fixed_N)
+        parity_jpjq = __generate_parity_permutations(jpjq, fixed_N)
         ans = 0.0+0.0j
 
-        for (nip, niq, i_parity) in __partial_perms(ipiq,
-                                                    fixed_partial_perms):
-            for (njp, njq, j_parity) in __partial_perms(jpjq,
-                                                        fixed_partial_perms):
+        for nip, niq, i_parity in __partial_perms(ipiq, fixed_Np):
+            for njp, njq, j_parity in __partial_perms(jpjq, fixed_Np):
                 ans += left_tensor_list[__getIdx(Q, *nip, *njp)] * \
                     fixed_right_dict[__getIdx(
                         Q, *niq, *njq)] * i_parity*j_parity
 
         ans /= N_fact_2
-        for (nipiq, i_parity) in parity_ipiq:
-            for (njpjq, j_parity) in parity_jpjq:
+        for nipiq, i_parity in parity_ipiq:
+            for njpjq, j_parity in parity_jpjq:
                 tensor[__getIdx(Q, *nipiq, *njpjq)] = ans*i_parity*j_parity
 
     # 添字順序の逆転による影響を考慮する符号
