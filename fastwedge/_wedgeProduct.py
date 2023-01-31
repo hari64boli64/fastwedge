@@ -90,9 +90,9 @@ def fast_wedge(left_tensor: np.ndarray,
     # 添え字についてソートされているものを代表元としてループを回す
     for ipiq, jpjq in tqdm(product(combinations(range(Q), p+q),
                                    combinations(range(Q), p+q)),
-                           total=(math.fact(Q)
-                                  / math.fact(p+q)
-                                  / math.fact(Q-(p+q)))**2):
+                           total=(math.factorial(Q)
+                                  // math.factorial(p+q)
+                                  // math.factorial(Q-(p+q)))**2):
         parity_ipiq = _generate_parity_permutations(ipiq, fixed_N)
         parity_jpjq = _generate_parity_permutations(jpjq, fixed_N)
         ans = 0.0+0.0j

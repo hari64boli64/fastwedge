@@ -1,8 +1,10 @@
+import math
 import numpy as np
 import openfermion
 import scipy.sparse
-from typing import List, Tuple, Any
+from tqdm.notebook import tqdm
 from functools import lru_cache
+from typing import List, Tuple, Union, Any
 from itertools import combinations, combinations_with_replacement
 from fastwedge._basis import _generate_fixed_parity_permutations,\
     _generate_parity_permutations,\
@@ -99,10 +101,11 @@ def __my_get_sparse_operator(operator: openfermion.FermionOperator,
     return __my_jordan_wigner_sparse(operator, n_qubit)
 
 
-def __fast_expectation(operator: np.ndarray or openfermion.FermionOperator,
+def __fast_expectation(operator: Union[np.ndarray,
+                                       openfermion.FermionOperator],
                        state: np.ndarray,
-                       state_conj: np.ndarray or scipy.sparse.csc_matrix,
-                       n_qubit: int) -> np.complex:
+                       state_conj: Union[np.ndarray, scipy.sparse.csc_matrix],
+                       n_qubit: int) -> np.ndarray:
     if type(operator) == np.ndarray:
         return state_conj @ operator @ state
     else:
@@ -129,13 +132,19 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray) -> np.ndarray:
     assert 2**Q == vec.shape[0]
     rdm = [0.0+0.0j for _ in range(Q**(2*k))]
     fixed_k = _generate_fixed_parity_permutations(k)
-    for ps, qs in combinations_with_replacement(combinations(Q, k), 2):
+
+    QCk = math.factorial(Q)//math.factorial(k)//math.factorial(Q-k)
+
+    for ps, qs in tqdm(combinations_with_replacement(combinations(range(Q), k),
+                                                     2),
+                       total=QCk*(QCk+1)//2):
         val = __fast_expectation(openfermion.FermionOperator(
-            (sum(map(ps, lambda p: f"{p}^ ")), "") +
-            sum(map(qs, lambda q: f"{q} "), ""))[:-1], vec, csc_vector_conj, Q)
+            ("".join(map(lambda p: f"{p}^ ", ps))
+             + "".join(map(lambda q: f"{q} ", qs)))[:-1]),
+            vec, csc_vector_conj, Q)[0]
         # ps==qsの場合、以下は一部無駄があるが、条件分岐を挟む方が時間が掛かりそう。
         for perm1, parity1 in _generate_parity_permutations(ps, fixed_k):
             for perm2, parity2 in _generate_parity_permutations(qs, fixed_k):
-                rdm[_getIdx(Q, *perm1, *perm2)] = val*parity1*parity2
+                rdm[_getIdx(Q, *perm1, *perm2)] = (val*parity1*parity2)
                 rdm[_getIdx(Q, *perm2, *perm1)] = (val*parity1*parity2).conj()
     return np.array(rdm).reshape(tuple(Q for _ in range(2*k)))
