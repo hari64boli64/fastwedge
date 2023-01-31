@@ -3,7 +3,7 @@ import numpy as np
 from tqdm.notebook import tqdm
 from typing import Tuple
 from itertools import product, combinations
-from basis import _generate_fixed_partial_perms,\
+from fastwedge._basis import _generate_fixed_partial_perms,\
     _generate_parity_permutations,\
     _generate_fixed_parity_permutations,\
     _partial_perms,\

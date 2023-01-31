@@ -4,7 +4,7 @@ import scipy.sparse
 from typing import List, Tuple, Any
 from functools import lru_cache
 from itertools import combinations, combinations_with_replacement
-from basis import _generate_fixed_parity_permutations,\
+from fastwedge._basis import _generate_fixed_parity_permutations,\
     _generate_parity_permutations,\
     _getIdx
 
