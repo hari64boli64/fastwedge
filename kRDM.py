@@ -1,8 +1,12 @@
 import numpy as np
 import openfermion
 import scipy.sparse
-from typing import List, Tuple, Union, Any
+from typing import List, Tuple, Any
 from functools import lru_cache
+from itertools import combinations, combinations_with_replacement
+from basis import _generate_fixed_parity_permutations,\
+    _generate_parity_permutations,\
+    _getIdx
 
 
 @lru_cache(maxsize=10)
@@ -98,7 +102,7 @@ def __my_get_sparse_operator(operator: openfermion.FermionOperator,
 def __fast_expectation(operator: np.ndarray or openfermion.FermionOperator,
                        state: np.ndarray,
                        state_conj: np.ndarray or scipy.sparse.csc_matrix,
-                       n_qubit: int):
+                       n_qubit: int) -> np.complex:
     if type(operator) == np.ndarray:
         return state_conj @ operator @ state
     else:
@@ -110,125 +114,28 @@ def __fast_expectation(operator: np.ndarray or openfermion.FermionOperator,
                                                ) @ state
 
 
-def __get_sign_of_perm(perm: Union[List[int], Tuple[int, ...]]) -> int:
-    """Calculate sign of permutation.
-
-    See sympy.combinatorics / Permutation / _af_parity
+def fast_compute_k_rdm(k: int, vec: np.ndarray) -> np.ndarray:
+    """compute k-RDM
 
     Args:
-        perm (List[int] or Tuple[int, ...]): permutation(0,1,...,len(perm)-1)
-
-    Returns:
-        int: sign of permutation (+1 or -1)
-    """
-    n = len(perm)
-    a = [0] * n
-    c = 0
-    for j in range(n):
-        if a[j] == 0:
-            c += 1
-            a[j] = 1
-            i = j
-            while perm[i] != j:
-                i = perm[i]
-                a[i] = 1
-    return 1 if (n - c) % 2 == 0 else -1
-
-
-def __get_sign_of_args(args: Union[List[int], Tuple[int, ...]]):
-    """Calculate sign of args.
-
-    Args:
-        perm (List[int] or Tuple[int, ...]): args (e.g. [3,1,4], (0,0,0))
-
-    Returns:
-        int: sign of permutation (+1 or -1 or 0)
-    """
-    if len(args) - len(np.unique(args)) > 0:
-        return 0
-    return __get_sign_of_perm(np.argsort(args).tolist())
-
-
-def __get_corresponding_index(args: Tuple[int, ...]
-                              ) -> Tuple[Tuple[int, ...], bool, int]:
-    # 渡されたnotebookに存在した関数
-    k = len(args)//2
-    assert len(args) == 2*k
-    args_ = list(args)
-    args1 = args_[:k]
-    args2 = args_[k:]
-    sign1 = __get_sign_of_args(args1)
-    sign2 = __get_sign_of_args(args2)
-    argmin1 = min(args1)
-    argmin2 = min(args2)
-    if_conjugate = argmin1 > argmin2
-    if if_conjugate:
-        args1_ref = sorted(args2)
-        args2_ref = sorted(args1)
-    else:
-        args1_ref = sorted(args1)
-        args2_ref = sorted(args2)
-    return tuple(args1_ref + args2_ref), if_conjugate, sign1 * sign2
-
-
-def fast_compute_one_rdm(vec: np.ndarray) -> np.ndarray:
-    """compute 1-RDM
-
-    Args:
-        vec (np.ndarray): Haar random state
-
-    Returns:
-        np.ndarray: 1-RDM of vec
-    """
-    csc_vector_conj = scipy.sparse.csc_matrix(vec.conj())
-    n_qubit = int(np.log2(vec.shape[0]))
-    assert 2**n_qubit == vec.shape[0]
-    rdm1 = np.zeros((n_qubit, n_qubit), dtype=complex)
-    for i in range(n_qubit):
-        for j in range(i, n_qubit):
-            cij = __fast_expectation(openfermion.FermionOperator(
-                f"{i}^ {j}"), vec, csc_vector_conj, n_qubit)
-            rdm1[i, j] = np.copy(cij)
-            rdm1[j, i] = np.copy(cij).conj()
-    return rdm1
-
-
-def fast_compute_two_rdm(vec: np.ndarray) -> np.ndarray:
-    """compute 2-RDM
-
-    Args:
+        k (int): k of k-RDM
         vec (np.ndarray): Haar random state
 
     Returns:
         np.ndarray: 2-RDM of vec
     """
     csc_vector_conj = scipy.sparse.csc_matrix(vec.conj())
-    n_qubit = int(np.log2(vec.shape[0]))
-    assert 2**n_qubit == vec.shape[0]
-    rdm2 = np.zeros((n_qubit, n_qubit, n_qubit, n_qubit), dtype=complex)
-    for i in range(n_qubit):
-        for j in range(i, n_qubit):
-            for k in range(j, n_qubit):
-                for l in range(k, n_qubit):
-                    unique_args = list(set([(i, j, k, l),
-                                            (i, k, j, l),
-                                            (i, l, j, k)]))
-                    for args in unique_args:
-                        if args[0] == args[1] or args[2] == args[3]:
-                            continue
-                        exp = __fast_expectation(openfermion.FermionOperator(
-                            f"{args[0]}^ {args[1]}^ {args[2]} {args[3]}"),
-                            vec, csc_vector_conj, n_qubit)
-                        rdm2[args] = exp
-    for i in range(n_qubit):
-        for j in range(n_qubit):
-            for k in range(n_qubit):
-                for l in range(n_qubit):
-                    args = (i, j, k, l)
-                    args_ref, if_conjugate, sign = __get_corresponding_index(
-                        args)
-                    cijkl = np.copy(rdm2[args_ref]) * sign
-                    if if_conjugate:
-                        cijkl = cijkl.conj()
-                    rdm2[i, j, k, l] = np.copy(cijkl)
-    return rdm2
+    Q = int(np.log2(vec.shape[0]))
+    assert 2**Q == vec.shape[0]
+    rdm = [0.0+0.0j for _ in range(Q**(2*k))]
+    fixed_k = _generate_fixed_parity_permutations(k)
+    for ps, qs in combinations_with_replacement(combinations(Q, k), 2):
+        val = __fast_expectation(openfermion.FermionOperator(
+            (sum(map(ps, lambda p: f"{p}^ ")), "") +
+            sum(map(qs, lambda q: f"{q} "), ""))[:-1], vec, csc_vector_conj, Q)
+        # ps==qsの場合、以下は一部無駄があるが、条件分岐を挟む方が時間が掛かりそう。
+        for perm1, parity1 in _generate_parity_permutations(ps, fixed_k):
+            for perm2, parity2 in _generate_parity_permutations(qs, fixed_k):
+                rdm[_getIdx(Q, *perm1, *perm2)] = val*parity1*parity2
+                rdm[_getIdx(Q, *perm2, *perm1)] = (val*parity1*parity2).conj()
+    return np.array(rdm).reshape(tuple(Q for _ in range(2*k)))
