@@ -122,11 +122,12 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray) -> np.ndarray:
 
     Args:
         k (int): k of k-RDM
-        vec (np.ndarray): Haar random state
+        vec (np.ndarray): Haar state
 
     Returns:
-        np.ndarray: 2-RDM of vec
+        np.ndarray: k-RDM of vec
     """
+    assert k >= 1
     csc_vector_conj = scipy.sparse.csc_matrix(vec.conj())
     Q = int(np.log2(vec.shape[0]))
     assert 2**Q == vec.shape[0]

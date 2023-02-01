@@ -4,7 +4,7 @@ from itertools import permutations
 
 
 @jit
-def _getIdx(Q: int, *args: int):
+def _getIdx(Q: int, *args: int) -> int:
     """Calculate 1 dim idx from muiti dim idx
 
     Args:
@@ -27,7 +27,8 @@ def _get_sign_of_perm(perm: Union[List[int], Tuple[int, ...]]) -> int:
     See sympy.combinatorics / Permutation / _af_parity
 
     Args:
-        perm (List[int] or Tuple[int, ...]): permutation(0,1,...,len(perm)-1)
+        perm (Union[List[int], Tuple[int, ...]]):
+            permutation(0,1,...,len(perm)-1)
 
     Returns:
         int: sign of permutation (+1 or -1)
@@ -82,7 +83,7 @@ def _partial_perms(seq: Tuple[int, ...],
                                                    List[int], int]]
                    ) -> List[Tuple[List[int], List[int], int]]:
     """Enumerate all permutaion of seq and its sign
-    using the precalculation result.
+    using the precalculated result.
 
     Args:
         seq (Tuple[int, ...]): target sequence
@@ -116,7 +117,7 @@ def _generate_parity_permutations(seq: Tuple[int, ...],
                                       Tuple[int, ...], int]]
                                   ) -> List[Tuple[List[int], int]]:
     """Enumerate all permutaion of seq and its sign
-    using the precalculation result.
+    using the precalculated result.
 
     Args:
         seq (Tuple[int, ...]): target sequence

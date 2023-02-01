@@ -39,6 +39,47 @@ def fast_wedge(left_tensor: np.ndarray,
     convention. tpdm[i, j, k, l] = <i^ j^ k l>,
     rtensor[u1, u2, u3, d1] = <u1^ u2^ u3^ d1>
 
+    Warning:
+        We define a,b,p,q,N,Q as below.
+        $$
+            a_0^0=1,a_1^0=2,a_0^1=3,a_1^1=4 \\\\
+            b_0^0=1,b_1^0=2,b_0^1=3,b_1^1=4 \\\\
+            p=1,q=1,N=2,Q=2
+        $$
+
+        Then,
+        $$
+            \\begin{align}
+                & (a \\wedge b)^{0, 1}_{0, 1} \\
+                =& \\left(\\frac{1}{N!}\\right)^{2}
+                    \\sum_{\\pi, \\sigma}\\epsilon(\\pi)\\epsilon(\\sigma)
+                    a_{\\pi(0)}^{ \\sigma(0)}b_{\\pi(1)}^{ \\sigma(1)} \\\\
+                =& \\frac{1}{4} ((1*1*a_0^0b_1^1)+(-1*1*a_1^0b_0^1)
+                                +(1*-1*a_0^1b_1^0)+(-1*-1*a_1^1b_0^0)) \\\\
+                =& \\frac{1}{4} ((1*1*1*4)+(-1*1*2*3)
+                                +(1*-1*3*2)+(-1*-1*4*1)) \\\\
+                =& -1
+            \\end{align}
+        $$
+
+        However,The code below
+
+        ```python
+        example_a = np.array([[1, 2], [3, 4]])
+        example_b = np.array([[1, 2], [3, 4]])
+        example_tensor = wedge(example_a, example_b, (1, 1), (1, 1))
+        print(f"{example_tensor[0,1,0,1]=}")
+        ```
+
+        returns "example_tensor[0,1,0,1]=(1+0j)", which is not -1.
+
+        This is because
+        $$
+            tensor[0,1,0,1]=(a \\wedge b)^{0, 1}_{1, 0}
+        $$
+        (<a^ b^ c d> = D_{dc}^{ab},
+        as noted in the comment of openfermion.wedge)
+
     Args:
         left_tensor: left tensor to wedge product
         right_tensor: right tensor to wedge product
@@ -50,13 +91,24 @@ def fast_wedge(left_tensor: np.ndarray,
         new tensor constructed as the wedge product of the left_tensor and
         right_tensor
     """
-    assert left_tensor.ndim == sum(left_index_ranks)                   # 必須
-    assert right_tensor.ndim == sum(right_index_ranks)                 # 必須
-    assert len(set(left_tensor.shape) | set(right_tensor.shape)) == 1  # 必須
+    # 要請1: left_tensorの次元は、left_index_ranksの総和と一致する(openfermionにもある仕様)
+    assert left_tensor.ndim == sum(left_index_ranks)
+    # 要請2: right_tensorの次元は、right_index_ranksの総和と一致する(openfermionにもある仕様)
+    assert right_tensor.ndim == sum(right_index_ranks)
+    # 要請3: left_tensorとright_tensorでn_qubitsが同一である
+    assert len(set(left_tensor.shape) | set(right_tensor.shape)) == 1
+    # 要請4: left_tensor_ranksは同じ数字のペアでなければならない(openfermionにはない仕様)
+    assert left_index_ranks[0] == left_index_ranks[1]
+    # 要請5: right_tensor_ranksは同じ数字のペアでなければならない(openfermionにはない仕様)
+    assert right_index_ranks[0] == right_index_ranks[1]
+    # 要請6: n_qubits >= p + q でなければならない(そうでなければ全て0)
+    assert left_tensor.shape[0] >= left_index_ranks[0]+right_index_ranks[0]
 
-    # TODO: fix(?)
-    assert left_index_ranks[0] == left_index_ranks[1]                  # 必須でない
-    assert right_index_ranks[0] == right_index_ranks[1]                # 必須でない
+    if left_index_ranks[0] > right_index_ranks[1]:
+        left_tensor, right_tensor =\
+            right_tensor, left_tensor
+        left_index_ranks, right_index_ranks =\
+            right_index_ranks, left_index_ranks
 
     # 定数定義
     p = left_index_ranks[0]
@@ -76,17 +128,19 @@ def fast_wedge(left_tensor: np.ndarray,
     fixed_Np = _generate_fixed_partial_perms(N, p)
 
     # right_tensorについての事前計算
-    fixed_right_dict = dict()
+    fixed_right_list = [0.0+0.0j for _ in range(Q**(2*q))]
     for iq in combinations(range(Q), q):
         for jq in combinations(range(Q), q):
-            right = 0
+            right = 0.0+0.0j
             for niq, parity1 in _generate_parity_permutations(iq, fixed_q):
                 for njq, parity2 in _generate_parity_permutations(jq, fixed_q):
                     right += right_tensor_list[_getIdx(Q, *niq, *njq)] * \
                         parity1*parity2
-            fixed_right_dict[_getIdx(Q, *iq, *jq)] = right
+            fixed_right_list[_getIdx(Q, *iq, *jq)] = right
 
-    # TODO: Q < p+q
+    # 添字順序の逆転による影響を考慮する符号
+    sign_adjustment = (-1)**(p*q)
+
     # 添え字についてソートされているものを代表元としてループを回す
     for ipiq, jpjq in tqdm(product(combinations(range(Q), p+q),
                                    combinations(range(Q), p+q)),
@@ -101,18 +155,14 @@ def fast_wedge(left_tensor: np.ndarray,
         for nip, niq, i_parity in _partial_perms(ipiq, fixed_Np):
             for njp, njq, j_parity in _partial_perms(jpjq, fixed_Np):
                 ans += left_tensor_list[_getIdx(Q, *nip, *njp)] * \
-                    fixed_right_dict[_getIdx(
+                    fixed_right_list[_getIdx(
                         Q, *niq, *njq)] * i_parity*j_parity
         ans /= N_fact_2
+        ans *= sign_adjustment
 
         # 同値類に属する要素へ、代表元の値を利用して計算
         for nipiq, i_parity in parity_ipiq:
             for njpjq, j_parity in parity_jpjq:
                 tensor[_getIdx(Q, *nipiq, *njpjq)] = ans*i_parity*j_parity
 
-    # 添字順序の逆転による影響を考慮する符号
-    sign_adjustment = (-1)**(p*q)
-
-    return np.array(tensor)\
-        .reshape(tuple(Q for _ in range(2*N)))\
-        * sign_adjustment
+    return np.array(tensor).reshape(tuple(Q for _ in range(2*N)))

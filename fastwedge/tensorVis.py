@@ -170,3 +170,55 @@ def vis6dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
     plt.text(-0.10, 1.02, "m",  color="blue", **params)
     plt.text(-0.05, 1.02, "n",  color="blue", **params)
     plt.show()
+
+
+def vis8dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
+    """8d tensor visualizer
+
+    Args:
+        tensor (np.ndarray): target tensor
+        size (int, optional): size of output img. Defaults to 8.
+        title (_type_, optional): title of the fig. Defaults to None.
+    """
+    N = tensor.shape[0]
+    assert len(tensor.shape) == 8, tensor.shape
+    assert len(set(tensor.shape)) == 1, tensor.shape
+    assert N**8 <= 100000000, f"N^8={N**8}, which is too big to vis."
+    listTensor = tensor.tolist()
+    twoD = [
+        [abs(listTensor[i][j][k][l][m][n][o][p])
+         for i, j, k, l in itertools.product(range(N), range(N),
+                                             range(N), range(N))]
+        for m, n, o, p in itertools.product(range(N), range(N),
+                                            range(N), range(N))
+    ]
+    params = __vis_subroutine(N, twoD, size, title)
+    x = 0
+    for i in range(N):
+        plt.text((x+N*N*N/2)/(N*N*N*N), 1.20, str(i), **params)
+        for j in range(N):
+            plt.text((x+N*N/2)/(N*N*N*N), 1.15, str(j),  **params)
+            for k in range(N):
+                plt.text((x+N/2)/(N*N*N*N), 1.10, str(k),  **params)
+                for l in range(N):
+                    plt.text((x+1/2)/(N*N*N*N), 1.05, str(l),  **params)
+                    x += 1
+    plt.text(-0.02, 1.20, "i", color="blue", **params)
+    plt.text(-0.02, 1.15, "j", color="blue", **params)
+    plt.text(-0.02, 1.10, "k", color="blue", **params)
+    plt.text(-0.02, 1.05, "l", color="blue", **params)
+    y = 0
+    for m in range(N):
+        plt.text(-0.20, 1-(y+N*N*N/2)/(N*N*N*N), str(m),  **params)
+        for n in range(N):
+            plt.text(-0.15, 1-(y+N*N/2)/(N*N*N*N), str(n), **params)
+            for o in range(N):
+                plt.text(-0.10, 1-(y+N/2)/(N*N*N*N), str(o), **params)
+                for p in range(N):
+                    plt.text(-0.05, 1-(y+1/2)/(N*N*N*N), str(p), **params)
+                    y += 1
+    plt.text(-0.20, 1.02, "m",  color="blue", **params)
+    plt.text(-0.15, 1.02, "n",  color="blue", **params)
+    plt.text(-0.10, 1.02, "o",  color="blue", **params)
+    plt.text(-0.05, 1.02, "p",  color="blue", **params)
+    plt.show()
