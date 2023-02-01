@@ -116,6 +116,7 @@ def fast_wedge(left_tensor: np.ndarray,
     N = p+q
     N_fact_2 = math.factorial(N)**2
     Q = left_tensor.shape[0]
+    idx_up = Q**N
 
     # ランダムアクセスが必要、かつ、多次元配列のままだと遅いので、通常の一次元listを使用
     tensor = [0.0+0.0j for _ in range(Q**(2*N))]
@@ -162,7 +163,8 @@ def fast_wedge(left_tensor: np.ndarray,
 
         # 同値類に属する要素へ、代表元の値を利用して計算
         for nipiq, i_parity in parity_ipiq:
+            nipiq_idx = _getIdx(Q, *nipiq)*idx_up
             for njpjq, j_parity in parity_jpjq:
-                tensor[_getIdx(Q, *nipiq, *njpjq)] = ans*i_parity*j_parity
+                tensor[nipiq_idx+_getIdx(Q, *njpjq)] = ans*i_parity*j_parity
 
     return np.array(tensor).reshape(tuple(Q for _ in range(2*N)))
