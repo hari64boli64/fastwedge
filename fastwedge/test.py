@@ -49,7 +49,7 @@ class Test(unittest.TestCase):
         left_tensor = np.random.random(tuple(Q for _ in range(2*p)))\
             + 1j*np.random.random(tuple(Q for _ in range(2*p)))
         right_tensor = np.random.random(tuple(Q for _ in range(2*q)))\
-            + 1j*np.random.random(tuple(Q for _ in range(2*p)))
+            + 1j*np.random.random(tuple(Q for _ in range(2*q)))
         left_index_ranks = (p, p)
         right_index_ranks = (q, q)
         fast_ans = fast_wedge(left_tensor, right_tensor,
