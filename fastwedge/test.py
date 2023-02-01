@@ -18,8 +18,8 @@ def is_particle_number_correct(arg: int, n_qubit: int,
 def genHaarRandomState(seed: int, n_qubits: int,
                        n_electrons: int) -> np.ndarray:
     np.random.seed(seed)
-    vec = np.random.normal(size=2**n_qubits) + 1j * \
-        np.random.normal(size=2**n_qubits)
+    vec = np.random.normal(size=2**n_qubits) \
+        + 1j * np.random.normal(size=2**n_qubits)
     # particle number restriction
     vec = [vec[i] if is_particle_number_correct(i, n_qubits, n_electrons)
            else 0 for i in range(2**n_qubits)]
@@ -46,8 +46,10 @@ class Test(unittest.TestCase):
             )
 
     def _wedge(self, Q: int, p: int, q: int):
-        left_tensor = np.random.random(tuple(Q for _ in range(2*p)))
-        right_tensor = np.random.random(tuple(Q for _ in range(2*q)))
+        left_tensor = np.random.random(tuple(Q for _ in range(2*p)))\
+            + 1j*np.random.random(tuple(Q for _ in range(2*p)))
+        right_tensor = np.random.random(tuple(Q for _ in range(2*q)))\
+            + 1j*np.random.random(tuple(Q for _ in range(2*p)))
         left_index_ranks = (p, p)
         right_index_ranks = (q, q)
         fast_ans = fast_wedge(left_tensor, right_tensor,
