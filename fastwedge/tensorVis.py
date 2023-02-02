@@ -8,7 +8,7 @@ def __vis_subroutine(N: int,
                      twoD: List[List[complex]],
                      size: int,
                      title: Union[str, None] = None) -> dict:
-    fig = plt.figure(figsize=(size, size))
+    fig = plt.figure(figsize=(size, size), facecolor="white")
     ax = fig.add_subplot(1, 1, 1)
     plt.xticks([], [])
     plt.yticks([], [])
@@ -20,13 +20,13 @@ def __vis_subroutine(N: int,
     return params
 
 
-def vis2dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
+def __vis2dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
     """2d tensor visualizer
 
     Args:
         tensor (np.ndarray): target tensor
-        size (int, optional): size of output img. Defaults to 8.
-        title (_type_, optional): title of the fig. Defaults to None.
+        size (int): size of the output img
+        title (str): title of the fig
     """
     N = tensor.shape[0]
     assert len(tensor.shape) == 2, tensor.shape
@@ -52,13 +52,13 @@ def vis2dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
     plt.show()
 
 
-def vis4dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
+def __vis4dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
     """4d tensor visualizer(Karnaugh)
 
     Args:
         tensor (np.ndarray): target tensor
-        size (int, optional): size of output img. Defaults to 8.
-        title (_type_, optional): title of the fig. Defaults to None.
+        size (int): size of the output img
+        title (str): title of the fig
     """
     N = tensor.shape[0]
     assert len(tensor.shape) == 4, tensor.shape
@@ -66,9 +66,9 @@ def vis4dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
     assert N**4 <= 10000000, f"N^4={N**4}, which is too big to vis."
     listTensor = tensor.tolist()
     twoD = [
-        [abs(listTensor[i][j][k][l])
+        [abs(listTensor[i][j][k][l_])
          for i, j in itertools.product(range(N), range(N))]
-        for k, l in itertools.product(range(N), range(N))
+        for k, l_ in itertools.product(range(N), range(N))
     ]
     params = __vis_subroutine(N, twoD, size, title)
     x = 0
@@ -82,21 +82,117 @@ def vis4dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
     y = 0
     for k in range(N):
         plt.text(-0.1, 1-(y+N/2)/(N*N), str(k),  **params)
-        for l in range(N):
-            plt.text(-0.05, 1-(y+1/2)/(N*N), str(l), **params)
+        for l_ in range(N):
+            plt.text(-0.05, 1-(y+1/2)/(N*N), str(l_), **params)
             y += 1
     plt.text(-0.1, 1.02, "k",  color="blue", **params)
     plt.text(-0.05, 1.02, "l",  color="blue", **params)
     plt.show()
 
 
-def vis4dTensorNest(tensor: np.ndarray, size: int = 8, title=None):
+def __vis6dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
+    """6d tensor visualizer
+
+    Args:
+        tensor (np.ndarray): target tensor
+        size (int): size of the output img
+        title (str): title of the fig
+    """
+    N = tensor.shape[0]
+    assert len(tensor.shape) == 6, tensor.shape
+    assert len(set(tensor.shape)) == 1, tensor.shape
+    assert N**6 <= 10000000, f"N^6={N**6}, which is too big to vis."
+    listTensor = tensor.tolist()
+    twoD = [
+        [abs(listTensor[i][j][k][l_][m][n])
+         for i, j, k in itertools.product(range(N), range(N), range(N))]
+        for l_, m, n in itertools.product(range(N), range(N), range(N))
+    ]
+    params = __vis_subroutine(N, twoD, size, title)
+    x = 0
+    for i in range(N):
+        plt.text((x+N*N/2)/(N*N*N), 1.15, str(i), **params)
+        for j in range(N):
+            plt.text((x+N/2)/(N*N*N), 1.10, str(j),  **params)
+            for k in range(N):
+                plt.text((x+1/2)/(N*N*N), 1.05, str(k),  **params)
+                x += 1
+    plt.text(-0.02, 1.15, "i", color="blue", **params)
+    plt.text(-0.02, 1.10, "j", color="blue", **params)
+    plt.text(-0.02, 1.05, "k", color="blue", **params)
+    y = 0
+    for l_ in range(N):
+        plt.text(-0.15, 1-(y+N*N/2)/(N*N*N), str(l_),  **params)
+        for m in range(N):
+            plt.text(-0.10, 1-(y+N/2)/(N*N*N), str(m), **params)
+            for n in range(N):
+                plt.text(-0.05, 1-(y+1/2)/(N*N*N), str(n), **params)
+                y += 1
+    plt.text(-0.15, 1.02, "l",  color="blue", **params)
+    plt.text(-0.10, 1.02, "m",  color="blue", **params)
+    plt.text(-0.05, 1.02, "n",  color="blue", **params)
+    plt.show()
+
+
+def __vis8dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
+    """8d tensor visualizer
+
+    Args:
+        tensor (np.ndarray): target tensor
+        size (int): size of the output img
+        title (str): title of the fig
+    """
+    N = tensor.shape[0]
+    assert len(tensor.shape) == 8, tensor.shape
+    assert len(set(tensor.shape)) == 1, tensor.shape
+    assert N**8 <= 100000000, f"N^8={N**8}, which is too big to vis."
+    listTensor = tensor.tolist()
+    twoD = [
+        [abs(listTensor[i][j][k][l_][m][n][o][p])
+         for i, j, k, l_ in itertools.product(range(N), range(N),
+                                              range(N), range(N))]
+        for m, n, o, p in itertools.product(range(N), range(N),
+                                            range(N), range(N))
+    ]
+    params = __vis_subroutine(N, twoD, size, title)
+    x = 0
+    for i in range(N):
+        plt.text((x+N*N*N/2)/(N*N*N*N), 1.20, str(i), **params)
+        for j in range(N):
+            plt.text((x+N*N/2)/(N*N*N*N), 1.15, str(j),  **params)
+            for k in range(N):
+                plt.text((x+N/2)/(N*N*N*N), 1.10, str(k),  **params)
+                for l_ in range(N):
+                    plt.text((x+1/2)/(N*N*N*N), 1.05, str(l_),  **params)
+                    x += 1
+    plt.text(-0.02, 1.20, "i", color="blue", **params)
+    plt.text(-0.02, 1.15, "j", color="blue", **params)
+    plt.text(-0.02, 1.10, "k", color="blue", **params)
+    plt.text(-0.02, 1.05, "l", color="blue", **params)
+    y = 0
+    for m in range(N):
+        plt.text(-0.20, 1-(y+N*N*N/2)/(N*N*N*N), str(m),  **params)
+        for n in range(N):
+            plt.text(-0.15, 1-(y+N*N/2)/(N*N*N*N), str(n), **params)
+            for o in range(N):
+                plt.text(-0.10, 1-(y+N/2)/(N*N*N*N), str(o), **params)
+                for p in range(N):
+                    plt.text(-0.05, 1-(y+1/2)/(N*N*N*N), str(p), **params)
+                    y += 1
+    plt.text(-0.20, 1.02, "m",  color="blue", **params)
+    plt.text(-0.15, 1.02, "n",  color="blue", **params)
+    plt.text(-0.10, 1.02, "o",  color="blue", **params)
+    plt.text(-0.05, 1.02, "p",  color="blue", **params)
+    plt.show()
+
+
+def vis4dTensorNest(tensor: np.ndarray, size: int = 8, title: str = None):
     """4d tensor visualizer(Nest)
 
     Args:
         tensor (np.ndarray): target tensor
-        size (int, optional): size of output img. Defaults to 8.
-        title (_type_, optional): title of the fig. Defaults to None.
+        size (int, optional): size of the output img. Defaults to 8.
+        title (str, optional): title of the fig. Defaults to None.
     """
     N = tensor.shape[0]
     assert len(tensor.shape) == 4, tensor.shape
@@ -120,105 +216,29 @@ def vis4dTensorNest(tensor: np.ndarray, size: int = 8, title=None):
     y = 0
     for j in range(N):
         plt.text(-0.1, 1-(y+N/2)/(N*N), str(j),  **params)
-        for l in range(N):
-            plt.text(-0.05, 1-(y+1/2)/(N*N), str(l), **params)
+        for l_ in range(N):
+            plt.text(-0.05, 1-(y+1/2)/(N*N), str(l_), **params)
             y += 1
     plt.text(-0.1, 1.02, "j",  color="blue", **params)
     plt.text(-0.05, 1.02, "l",  color="blue", **params)
     plt.show()
 
 
-def vis6dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
-    """6d tensor visualizer
+def visTensor(tensor: np.ndarray, size: int = 8, title: str = None):
+    """tensor visualizer
 
     Args:
         tensor (np.ndarray): target tensor
-        size (int, optional): size of output img. Defaults to 8.
-        title (_type_, optional): title of the fig. Defaults to None.
+        size (int, optional): size of the output img. Defaults to 8.
+        title (str, optional): title of the fig. Defaults to None.
     """
-    N = tensor.shape[0]
-    assert len(tensor.shape) == 6, tensor.shape
-    assert len(set(tensor.shape)) == 1, tensor.shape
-    assert N**6 <= 10000000, f"N^6={N**6}, which is too big to vis."
-    listTensor = tensor.tolist()
-    twoD = [
-        [abs(listTensor[i][j][k][l][m][n])
-         for i, j, k in itertools.product(range(N), range(N), range(N))]
-        for l, m, n in itertools.product(range(N), range(N), range(N))
-    ]
-    params = __vis_subroutine(N, twoD, size, title)
-    x = 0
-    for i in range(N):
-        plt.text((x+N*N/2)/(N*N*N), 1.15, str(i), **params)
-        for j in range(N):
-            plt.text((x+N/2)/(N*N*N), 1.10, str(j),  **params)
-            for k in range(N):
-                plt.text((x+1/2)/(N*N*N), 1.05, str(k),  **params)
-                x += 1
-    plt.text(-0.02, 1.15, "i", color="blue", **params)
-    plt.text(-0.02, 1.10, "j", color="blue", **params)
-    plt.text(-0.02, 1.05, "k", color="blue", **params)
-    y = 0
-    for l in range(N):
-        plt.text(-0.15, 1-(y+N*N/2)/(N*N*N), str(l),  **params)
-        for m in range(N):
-            plt.text(-0.10, 1-(y+N/2)/(N*N*N), str(m), **params)
-            for n in range(N):
-                plt.text(-0.05, 1-(y+1/2)/(N*N*N), str(n), **params)
-                y += 1
-    plt.text(-0.15, 1.02, "l",  color="blue", **params)
-    plt.text(-0.10, 1.02, "m",  color="blue", **params)
-    plt.text(-0.05, 1.02, "n",  color="blue", **params)
-    plt.show()
-
-
-def vis8dTensorKarnaugh(tensor: np.ndarray, size: int = 8, title=None):
-    """8d tensor visualizer
-
-    Args:
-        tensor (np.ndarray): target tensor
-        size (int, optional): size of output img. Defaults to 8.
-        title (_type_, optional): title of the fig. Defaults to None.
-    """
-    N = tensor.shape[0]
-    assert len(tensor.shape) == 8, tensor.shape
-    assert len(set(tensor.shape)) == 1, tensor.shape
-    assert N**8 <= 100000000, f"N^8={N**8}, which is too big to vis."
-    listTensor = tensor.tolist()
-    twoD = [
-        [abs(listTensor[i][j][k][l][m][n][o][p])
-         for i, j, k, l in itertools.product(range(N), range(N),
-                                             range(N), range(N))]
-        for m, n, o, p in itertools.product(range(N), range(N),
-                                            range(N), range(N))
-    ]
-    params = __vis_subroutine(N, twoD, size, title)
-    x = 0
-    for i in range(N):
-        plt.text((x+N*N*N/2)/(N*N*N*N), 1.20, str(i), **params)
-        for j in range(N):
-            plt.text((x+N*N/2)/(N*N*N*N), 1.15, str(j),  **params)
-            for k in range(N):
-                plt.text((x+N/2)/(N*N*N*N), 1.10, str(k),  **params)
-                for l in range(N):
-                    plt.text((x+1/2)/(N*N*N*N), 1.05, str(l),  **params)
-                    x += 1
-    plt.text(-0.02, 1.20, "i", color="blue", **params)
-    plt.text(-0.02, 1.15, "j", color="blue", **params)
-    plt.text(-0.02, 1.10, "k", color="blue", **params)
-    plt.text(-0.02, 1.05, "l", color="blue", **params)
-    y = 0
-    for m in range(N):
-        plt.text(-0.20, 1-(y+N*N*N/2)/(N*N*N*N), str(m),  **params)
-        for n in range(N):
-            plt.text(-0.15, 1-(y+N*N/2)/(N*N*N*N), str(n), **params)
-            for o in range(N):
-                plt.text(-0.10, 1-(y+N/2)/(N*N*N*N), str(o), **params)
-                for p in range(N):
-                    plt.text(-0.05, 1-(y+1/2)/(N*N*N*N), str(p), **params)
-                    y += 1
-    plt.text(-0.20, 1.02, "m",  color="blue", **params)
-    plt.text(-0.15, 1.02, "n",  color="blue", **params)
-    plt.text(-0.10, 1.02, "o",  color="blue", **params)
-    plt.text(-0.05, 1.02, "p",  color="blue", **params)
-    plt.show()
+    if tensor.ndim == 2:
+        __vis2dTensorKarnaugh(tensor, size, title)
+    elif tensor.ndim == 4:
+        __vis4dTensorKarnaugh(tensor, size, title)
+    elif tensor.ndim == 6:
+        __vis6dTensorKarnaugh(tensor, size, title)
+    elif tensor.ndim == 8:
+        __vis8dTensorKarnaugh(tensor, size, title)
+    else:
+        assert False, f"tensor.ndim must be 2,4,6, or 8, but is {tensor.ndim}"

@@ -50,7 +50,7 @@ def fast_wedge(left_tensor: np.ndarray,
         Then,
         $$
             \\begin{align}
-                & (a \\wedge b)^{0, 1}_{0, 1} \\
+                & (a \\wedge b)^{0, 1}_{0, 1} \\\\
                 =& \\left(\\frac{1}{N!}\\right)^{2}
                     \\sum_{\\pi, \\sigma}\\epsilon(\\pi)\\epsilon(\\sigma)
                     a_{\\pi(0)}^{ \\sigma(0)}b_{\\pi(1)}^{ \\sigma(1)} \\\\
