@@ -207,13 +207,7 @@ $$
 
 開発時以外に使う必要はありません。
 
-```python
-import fastwedge
-
-fastwedge.test()
-```
-
-で実行可能です。
+Github Actionsを用いて実行しています。
 
 # LICENSE
 
