@@ -81,12 +81,14 @@ def _make_jordan_wigners_mul_vec(Q, k, vec):
     return jordan_wigners_mul_vec
 
 
-def fast_compute_k_rdm(k: int, vec: np.ndarray) -> np.ndarray:
+def fast_compute_k_rdm(k: int, vec: np.ndarray,
+                       verbose: bool = True) -> np.ndarray:
     """compute k-RDM
 
     Args:
         k (int): k of k-RDM
         vec (np.ndarray): Haar state
+        verbose (bool, optional): Show progress. Defaults to True.
 
     Returns:
         np.ndarray: k-RDM of vec
@@ -105,7 +107,8 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray) -> np.ndarray:
 
     for ps, qs in tqdm(combinations_with_replacement(combinations(range(Q), k),
                                                      2),
-                       total=QCk*(QCk+1)//2):
+                       total=QCk*(QCk+1)//2,
+                       disable=not verbose):
         bra = jordan_wigners_mul_vec[_getIdx(Q, *ps[::-1])]
         ket = jordan_wigners_mul_vec[_getIdx(Q, *qs)]
         val = np.dot(bra.conj(), ket)

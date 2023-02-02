@@ -14,9 +14,10 @@ def fast_wedge_topM(left_tensor: np.ndarray,
                     right_tensor: np.ndarray,
                     left_index_ranks: Tuple[int, int],
                     right_index_ranks: Tuple[int, int],
-                    M: int) -> List[Tuple[float, complex,
-                                          Tuple[int, ...],
-                                          Tuple[int, ...]]]:
+                    M: int,
+                    verbose: bool = True) -> List[Tuple[float, complex,
+                                                        Tuple[int, ...],
+                                                        Tuple[int, ...]]]:
     """Enumerate only the top M absolute values of the wedge product
 
     For more details, please see fastwedge.fast_wedge.
@@ -37,6 +38,7 @@ def fast_wedge_topM(left_tensor: np.ndarray,
         right_index_ranks: tuple of number of indices that transform
                            contravariently and covariently
         M: the M of topM
+        verbose (bool, optional): Show progress. Defaults to True.
 
     Returns:
         List[Tuple[float, complex, Tuple[int, ...], Tuple[int, ...]]]:
@@ -103,7 +105,8 @@ def fast_wedge_topM(left_tensor: np.ndarray,
                                    combinations(range(Q), p+q)),
                            total=(math.factorial(Q)
                                   // math.factorial(p+q)
-                                  // math.factorial(Q-(p+q)))**2):
+                                  // math.factorial(Q-(p+q)))**2,
+                            disable=not verbose):
         # 代表元に当たる要素の計算
         ans = 0.0+0.0j
         for nip, niq, i_parity in _partial_perms(ipiq, fixed_Np):

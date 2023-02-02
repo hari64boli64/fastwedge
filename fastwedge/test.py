@@ -37,7 +37,7 @@ class Test(unittest.TestCase):
         return super().setUp()
 
     def _krdm(self, k: int):
-        fast_k_rdm = fast_compute_k_rdm(k, self.vec)
+        fast_k_rdm = fast_compute_k_rdm(k, self.vec, False)
         for _ in range(100):
             idxs = tuple(random.randrange(self.Q) for _ in range(2*k))
             self.assertAlmostEqual(
@@ -53,12 +53,12 @@ class Test(unittest.TestCase):
         left_index_ranks = (p, p)
         right_index_ranks = (q, q)
         fast_ans = fast_wedge(left_tensor, right_tensor,
-                              left_index_ranks, right_index_ranks),
+                              left_index_ranks, right_index_ranks, False),
         slow_ans = slow_wedge(left_tensor, right_tensor,
                               left_index_ranks, right_index_ranks)
         self.assert_(np.allclose(fast_ans, slow_ans))
         topM = fast_wedge_topM(left_tensor, right_tensor,
-                               left_index_ranks, right_index_ranks, 10)
+                               left_index_ranks, right_index_ranks, 10, False)
         for _, elem, ipiq, jpjq in topM:
             self.assertAlmostEqual(
                 slow_ans[tuple(list(ipiq)+list(jpjq))], elem)

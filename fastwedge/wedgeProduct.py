@@ -13,7 +13,8 @@ from fastwedge._basis import _generate_fixed_partial_perms,\
 def fast_wedge(left_tensor: np.ndarray,
                right_tensor: np.ndarray,
                left_index_ranks: Tuple[int, int],
-               right_index_ranks: Tuple[int, int]) -> np.ndarray:
+               right_index_ranks: Tuple[int, int],
+               verbose: bool = True) -> np.ndarray:
     """fast version of openfermion.wedge
 
     Implement the wedge product between left_tensor and right_tensor
@@ -87,6 +88,8 @@ def fast_wedge(left_tensor: np.ndarray,
                           contravariently and covariently
         right_index_ranks: tuple of number of indices that transform
                            contravariently and covariently
+        verbose (bool, optional): Show progress. Defaults to True.
+
     Returns:
         new tensor constructed as the wedge product of the left_tensor and
         right_tensor
@@ -147,7 +150,8 @@ def fast_wedge(left_tensor: np.ndarray,
                                    combinations(range(Q), p+q)),
                            total=(math.factorial(Q)
                                   // math.factorial(p+q)
-                                  // math.factorial(Q-(p+q)))**2):
+                                  // math.factorial(Q-(p+q)))**2,
+                           disable=not verbose):
         parity_ipiq = _generate_parity_permutations(ipiq, fixed_N)
         parity_jpjq = _generate_parity_permutations(jpjq, fixed_N)
         ans = 0.0+0.0j
