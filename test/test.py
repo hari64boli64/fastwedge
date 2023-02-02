@@ -122,12 +122,3 @@ class Test(unittest.TestCase):
 
     def test_Q6p3q1wedge(self):
         self._wedge(6, 3, 1)
-
-
-def test():
-    runner = unittest.TextTestRunner(descriptions=True, verbosity=2)
-    runner.run(unittest.makeSuite(Test))
-
-
-if __name__ == '__main__':
-    test()
