@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
                               left_index_ranks, right_index_ranks, False),
         slow_ans = slow_wedge(left_tensor, right_tensor,
                               left_index_ranks, right_index_ranks)
-        self.assert_(np.allclose(fast_ans, slow_ans))
+        self.assertTrue(np.allclose(fast_ans, slow_ans))
         topM = fast_wedge_topM(left_tensor, right_tensor,
                                left_index_ranks, right_index_ranks, 10, False)
         for _, elem, ipiq, jpjq in topM:
