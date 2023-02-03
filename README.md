@@ -3,7 +3,7 @@
 縮約密度行列とwedge積の高速な計算を行います。
 
 <p align="center">
-  <img src="imgs/2RDM.png" width="50%"></img>  
+  <img src="imgs/2RDM.png" width="50%"></img>
 </p>
 
 - [fastwedge](#fastwedge)
@@ -11,6 +11,7 @@
   - [Usage](#usage)
     - [visTensor](#vistensor)
     - [vis4dTensorNest](#vis4dtensornest)
+    - [visTensor2dReal](#vistensor2dreal)
     - [fast\_compute\_k\_rdm](#fast_compute_k_rdm)
     - [fast\_wedge](#fast_wedge)
     - [fast\_wedge\_topM](#fast_wedge_topm)
@@ -33,7 +34,7 @@ Google Colab上での利用を主に想定しています。
 
 $2,4,6,8$次元のテンソルのビジュアライズを行います。
 
-$2n$ 次元のテンソルに対して、 $1,2,...,n$ 番目のindexを上側に、 $n+1,n+2,...,2n$ 番目のindexを左側に並べています。
+$2n$ 次元のテンソルに対して、 $1,2,...,n$ 番目のindexを左側に、 $n+1,n+2,...,2n$ 番目のindexを上側に並べています。
 
 以下に実行例を載せます。
 
@@ -51,7 +52,7 @@ fastwedge.visTensor(tensor)
 
 $4$ 次元のテンソルのビジュアライズを入れ子状にして行います。
 
-$4$ 次元のテンソルに対して、それを $2$ 次元配列の各要素が $2$ 次元配列であると捉え、 $1,2$ 番目のindexを上側と左側に並べた後、各要素毎に対して $3,4$ 番目のindexを再び上側と左側に並べています。
+$4$ 次元のテンソルに対して、それを $2$ 次元配列の各要素が $2$ 次元配列であると捉え、 $1,2$ 番目のindexを左側と上側に並べた後、各要素毎に対して $3,4$ 番目のindexを再び左側と上側に並べています。
 
 以下に実行例を載せます。
 
@@ -65,6 +66,11 @@ fastwedge.vis4dTensorNest(tensor)
 
 ![example_of_vis4dTensorNest](imgs/example_of_vis4dTensorNest.png)
 
+### visTensor2dReal
+
+$2$次元のテンソルのビジュアライズを行います。
+
+ただし、これは実数のテンソルのみを入力として受け付け、絶対値ではなくそのままの値を表示させます。
 
 ### fast_compute_k_rdm
 
