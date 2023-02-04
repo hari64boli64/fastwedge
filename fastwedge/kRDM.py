@@ -1,82 +1,40 @@
-import math
 import numpy as np
-import openfermion
+from math import factorial
+from scipy.sparse import csr_matrix, coo_matrix
 from tqdm.notebook import tqdm
-from functools import lru_cache
-from typing import List, Tuple, Any
+from typing import Dict
 from itertools import combinations, combinations_with_replacement
 from fastwedge._basis import _generate_fixed_parity_permutations,\
     _generate_parity_permutations,\
     _getIdx
 
 
-@lru_cache(maxsize=10)
-def __make_jw_operators(n_qubits: int) -> List[Tuple[Any, Any]]:
-    """Cached function of one part of the openfermion.jordan_wigner_sparse
+# openfermion.jordan_wigner_ladder_sparse()
+def _make_jordan_wigners_mul_vec(Q: int, k: int, vec: np.ndarray,
+                                 ) -> Dict[int, np.ndarray]:
+    assert 1 <= k <= Q
 
-    Args:
-        n_qubits(int): Number of qubits.
+    n_hilbert = 2**Q
+    jordan_wigners_mul_vec = dict()
 
-    Returns:
-        List[Tuple[Any, Any]]: list of tuple of
-                               openfermion.jordan_wigner_ladder_sparse
+    for ps in combinations(range(Q)[::-1], k):
+        data = []
+        row = []
+        col = []
+        mask = sum(1 << (Q-1-p) for p in ps)
+        for r in range(n_hilbert-sum(1 << (Q-1-p) for p in ps)):
+            if r & mask:
+                continue
+            data.append(+1 if (sum(bin(r >> (Q-1-p))[2:].count('1')
+                                   for p in ps) % 2 == 1) else -1)
+            row.append(r)
+            col.append(r+sum(1 << (Q-1-p) for p in ps))
 
-    Note:
-        The max size of cache is now limited to 10, which can be modified.
-    """
-    # Create a list of raising and lowering operators for each orbital.
-    jw_operators = []
-    for tensor_factor in range(n_qubits):
-        jw_operators.append(
-            openfermion.jordan_wigner_ladder_sparse(n_qubits,
-                                                    tensor_factor,
-                                                    0).tocsr())
-    return jw_operators
-
-
-def _make_jordan_wigners_mul_vec(Q, k, vec):
-    assert k >= 1
-
-    jw_operators = __make_jw_operators(Q)
-
-    if k == 1:
-        return [jw_operator @ vec for jw_operator in jw_operators]
-
-    # # slow
-    # n_hilbert = 2**Q
-    # for ps in permutations(range(Q), k):
-    #     sparse_matrix = scipy.sparse.identity(n_hilbert,
-    #                                           dtype=complex,
-    #                                           format='csc')
-    #     for ladder_operator in ps:
-    #         sparse_matrix = sparse_matrix * jw_operators[ladder_operator]
-    #     jordan_wigners_mul_vec[_getIdx(Q, *ps)] = sparse_matrix @ vec
-
-    jordan_wigners_mul_vec = [None for _ in range(Q**k)]
-    path = []
-    seen = [False for _ in range(Q)]
-    que = []
-    for i in range(Q):
-        que.append((~i, None))
-        que.append((i, jw_operators[i]))
-
-    while que:
-        i, mat = que.pop()
-        if i >= 0:
-            seen[i] = True
-            path.append(i)
-            for ni in range(Q):
-                if seen[ni]:
-                    continue
-                if len(path) < k-1:
-                    que.append((~ni, None))
-                    que.append((ni, mat @ jw_operators[ni]))
-                elif len(path) == k-1:
-                    jordan_wigners_mul_vec[_getIdx(Q, *path, ni)] =\
-                        mat @ jw_operators[ni] @ vec
-        else:
-            seen[~i] = False
-            path.pop()
+        ans = csr_matrix((data, (row, col)),
+                         shape=(n_hilbert, n_hilbert)) @ vec
+        jordan_wigners_mul_vec[_getIdx(Q, *ps)] = ans
+        jordan_wigners_mul_vec[_getIdx(
+            Q, *ps[::-1])] = ans*((-1)**((k*(k-1)//2) % 2))
 
     return jordan_wigners_mul_vec
 
@@ -93,13 +51,17 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
     Returns:
         np.ndarray: k-RDM of vec
     """
-    assert k >= 1
     Q = int(np.log2(vec.shape[0]))
     assert 2**Q == vec.shape[0]
-    rdm = [0.0+0.0j for _ in range(Q**(2*k))]
+
+    # 要請: k <= Q でなければならない(そうでなければ全て0)
+    assert 1 <= k <= Q
+
+    rdm_data = []
+    rdm_idx = []
     fixed_k = _generate_fixed_parity_permutations(k)
 
-    QCk = math.factorial(Q)//math.factorial(k)//math.factorial(Q-k)
+    QCk = factorial(Q)//factorial(k)//factorial(Q-k)
 
     jordan_wigners_mul_vec = _make_jordan_wigners_mul_vec(Q, k, vec)
 
@@ -120,7 +82,12 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
             idx1 = _getIdx(Q, *perm1)
             for perm2, parity2 in _generate_parity_permutations(qs, fixed_k):
                 idx2 = _getIdx(Q, *perm2)
-                rdm[idx1*idx_up+idx2] = val_p1*parity2
-                rdm[idx2*idx_up+idx1] = val_conj_p1*parity2
+                rdm_data.append(val_p1*parity2)
+                rdm_data.append(val_conj_p1*parity2)
+                rdm_idx.append(idx1*idx_up+idx2)
+                rdm_idx.append(idx2*idx_up+idx1)
 
-    return np.array(rdm).reshape(tuple(Q for _ in range(2*k)))
+    return coo_matrix((rdm_data, (rdm_idx, [0]*len(rdm_data))),
+                      shape=(Q**(2*k), 1))\
+        .toarray()\
+        .reshape(tuple(Q for _ in range(2*k)))

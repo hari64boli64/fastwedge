@@ -217,76 +217,50 @@ def _make_jordan_wigners_mul_vec(Q, k, vec):
     return 
 \end{lstlisting}
 
-\section{結論}
+\section{さらなる高速化}
 
-以上が今回の高速化手法です。
+\textbf{以下が追記事項です。}
 
-先程記した通り、やっていること自体は自明にかなり近いのですが、考察過程はそれなりに非自明な点があることはお分かり頂けるかと思います。事実、私は変換後の問題の最適解がまだ分かっていません。
+実は、上記のことを考えずとも、今回の$C_i$に対しては、任意個の重複がない行列積が直接求まります。
 
-ただ、やはりやっていること自体は自明に近いです。
+まず、行列$C_i$の定義を述べます。以下、$\mathbb{N}$は$0$を含むものとします。
 
-なので、現状は、正直appendixに載せて頂く価値があるほどなのかは疑問です。
+関数$f(i,ps) : \mathbb{N} \times \mathbb{N}^\mathbb{N} \to \pm 1$を以下の様に定義します。
 
-\section{さらなる高速化の為に}
+$$
+    f(i,ps)=\sum_{p \in ps}{popcount\left(i>>p\right)}
+$$
 
-ただ、実はもう少し高速化の余地があって、個人的には是非もう少し考えたいです。
-
-というのも、問題設定において、各行列積が非可換であることを仮定しましたが、これが必ず真であるかどうかが分かっていません。
-多くの場合は非可換であることを実験的に確かめましたが、そもそもjw\_operator(上の記述でいう$C_i$に相当)が何であるのかがあまり数式的に理解していません。他にも何か良い性質があれば、演算が$\order{kn^2}$から更に落ちる可能性があります。
-
-このjw\_operatorをきちんと理解した上で考察すれば、更に計算量が削減できる可能性がゼロではありません。
-
-私はそこに希望を抱いていますし、そもそも私は何を計算しているかはいつか伺いたいと思っていました。
-
-\textbf{これが何かをお教えいただいても宜しいでしょうか?}
-
-\section{jw\_operatorについて}
-
-リンクは\href{https://quantumai.google/reference/python/openfermion/linalg/jordan_wigner_ladder_sparse}{これ}です。この関数について、もう少し意味をご教授願いたいです。これは物理的に何をしていますか?
-
-私は生成消滅演算子かと思っていたのですが、鹿野田先生の授業で習ったものと大分違うな……となって把握を諦めています。
-
-実装を見て、複雑で追いたくないな……と思ったまま今日まで放置していました。
-
-以下にビジュアライズ結果を載せておきます。n\_qubits=6の場合の各jw\_operatorです。(絶対値の表)
-
-お手数をおかけします。どうぞよろしくお願いいたします。
+ただし、関数$popcount(i): \mathbb{N} \to \mathbb{N}$は、$i$を二進数表記した際の1の個数(立っているビット数)とし、
+$i>>p$で$i$を$p$桁右シフトした値($\left\lfloor\frac{i}{2^p}\right\rfloor$)を表すものとします。
 
 \begin{figure}[htbp]
-    \begin{center}
-        \includegraphics[height=80mm]{jw_operators/1.png}
-        \caption{jw1}
-    \end{center}
+    \begin{minipage}{0.45\hsize}
+        \begin{center}
+            \includegraphics[width=70mm]{jw_operators/0.png}
+        \end{center}
+        \caption{0番目}
+    \end{minipage}
+    \begin{minipage}{0.45\hsize}
+        \begin{center}
+            \includegraphics[width=70mm]{jw_operators/1.png}
+        \end{center}
+        \caption{1番目}
+    \end{minipage}
 \end{figure}
 \begin{figure}[htbp]
-    \begin{center}
-        \includegraphics[height=80mm]{jw_operators/2.png}
-        \caption{jw2}
-    \end{center}
-\end{figure}
-\begin{figure}[htbp]
-    \begin{center}
-        \includegraphics[height=80mm]{jw_operators/3.png}
-        \caption{jw3}
-    \end{center}
-\end{figure}
-\begin{figure}[htbp]
-    \begin{center}
-        \includegraphics[height=80mm]{jw_operators/4.png}
-        \caption{jw4}
-    \end{center}
-\end{figure}
-\begin{figure}[htbp]
-    \begin{center}
-        \includegraphics[height=80mm]{jw_operators/5.png}
-        \caption{jw5}
-    \end{center}
-\end{figure}
-\begin{figure}[htbp]
-    \begin{center}
-        \includegraphics[height=80mm]{jw_operators/6.png}
-        \caption{jw6}
-    \end{center}
+    \begin{minipage}{0.45\hsize}
+        \begin{center}
+            \includegraphics[width=70mm]{jw_operators/2.png}
+        \end{center}
+        \caption{2番目}
+    \end{minipage}
+    \begin{minipage}{0.45\hsize}
+        \begin{center}
+            \includegraphics[width=70mm]{jw_operators/3.png}
+        \end{center}
+        \caption{3番目}
+    \end{minipage}
 \end{figure}
 
 \end{document}
