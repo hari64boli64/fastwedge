@@ -1,48 +1,31 @@
 import random
 import unittest
 import numpy as np
+from fastwedge._slow_jw_mul_vec import slow_jw_mul_vec
 from fastwedge._slow_kRDM import slow_compute_k_rdm
 from fastwedge._slow_wedge import slow_wedge
-from fastwedge.kRDM import fast_compute_k_rdm
+from fastwedge.kRDM import fast_compute_k_rdm, _make_jordan_wigners_mul_vec
 from fastwedge.wedgeProduct import fast_wedge
 from fastwedge.wedgeTopM import fast_wedge_topM
 
 
-def is_particle_number_correct(arg: int, n_qubit: int,
-                               n_particle: int) -> bool:
-    _l = bin(arg)[2:].zfill(n_qubit)
-    return sum([int(b) for b in _l]) == n_particle
-
-
-# generate Haar random state
-def genHaarRandomState(seed: int, n_qubits: int,
-                       n_electrons: int) -> np.ndarray:
-    np.random.seed(seed)
-    vec = np.random.normal(size=2**n_qubits) \
-        + 1j * np.random.normal(size=2**n_qubits)
-    # particle number restriction
-    vec = [vec[i] if is_particle_number_correct(i, n_qubits, n_electrons)
-           else 0 for i in range(2**n_qubits)]
-    vec /= np.linalg.norm(vec)
-    return vec
-
-
 class Test(unittest.TestCase):
-    def _makeVec(self):
-        self.Q = random.randint(5, 7)
-        self.e = random.randint(2, 4)
-        self.vec = genHaarRandomState(random.randrange(10000),
-                                      self.Q,
-                                      self.e)
-        return super().setUp()
+    def _jw(self, Q: int, k: int, vec: np.ndarray):
+        slow_jw = sorted(slow_jw_mul_vec(Q, k, vec).items())
+        fast_jw = sorted(_make_jordan_wigners_mul_vec(Q, k, vec).items())
+        for (s_key, s_val), (f_key, f_val) in zip(slow_jw, fast_jw):
+            self.assertEqual(s_key, f_key)
+            self.assertTrue(np.allclose(s_val, f_val))
 
-    def _krdm(self, k: int):
-        fast_k_rdm = fast_compute_k_rdm(k, self.vec, False)
+    def _krdm(self, Q: int, k: int):
+        vec = np.random.random(2**Q) + 1j*np.random.random(2**Q)
+        self._jw(Q, k, vec)
+        fast_k_rdm = fast_compute_k_rdm(k, vec, False)
         for _ in range(100):
-            idxs = tuple(random.randrange(self.Q) for _ in range(2*k))
+            idxs = tuple(random.randrange(Q) for _ in range(2*k))
             self.assertAlmostEqual(
                 fast_k_rdm[idxs],
-                slow_compute_k_rdm(self.vec, idxs)
+                slow_compute_k_rdm(vec, idxs)
             )
 
     def _wedge(self, Q: int, p: int, q: int):
@@ -63,29 +46,41 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(
                 slow_ans[tuple(list(ipiq)+list(jpjq))], elem)
 
-    def test_1rdm(self):
-        self._makeVec()
-        self._krdm(1)
-        self._makeVec()
-        self._krdm(1)
+    def test_Q1_1rdm(self):
+        self._krdm(1, 1)
 
-    def test_2rdm(self):
-        self._makeVec()
-        self._krdm(2)
-        self._makeVec()
-        self._krdm(2)
+    def test_Q2_1rdm(self):
+        self._krdm(2, 1)
 
-    def test_3rdm(self):
-        self._makeVec()
-        self._krdm(3)
-        self._makeVec()
-        self._krdm(3)
+    def test_Q3_1rdm(self):
+        self._krdm(3, 1)
 
-    def test_4rdm(self):
-        self._makeVec()
-        self._krdm(4)
-        self._makeVec()
-        self._krdm(4)
+    def test_Q2_2rdm(self):
+        self._krdm(2, 2)
+
+    def test_Q3_2rdm(self):
+        self._krdm(3, 2)
+
+    def test_Q4_2rdm(self):
+        self._krdm(4, 2)
+
+    def test_Q3_3rdm(self):
+        self._krdm(3, 3)
+
+    def test_Q4_3rdm(self):
+        self._krdm(4, 3)
+
+    def test_Q5_3rdm(self):
+        self._krdm(5, 3)
+
+    def test_Q4_4rdm(self):
+        self._krdm(4, 4)
+
+    def test_Q5_4rdm(self):
+        self._krdm(5, 4)
+
+    def test_Q6_4rdm(self):
+        self._krdm(6, 4)
 
     def test_Q4p1q1wedge(self):
         self._wedge(4, 1, 1)

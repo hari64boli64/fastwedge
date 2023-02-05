@@ -1,7 +1,8 @@
 import math
 import numpy as np
-from tqdm.notebook import tqdm
 from typing import Tuple
+from tqdm.notebook import tqdm
+from scipy.sparse import coo_matrix
 from itertools import product, combinations
 from fastwedge._basis import _generate_fixed_partial_perms,\
     _generate_parity_permutations,\
@@ -120,9 +121,12 @@ def fast_wedge(left_tensor: np.ndarray,
     N_fact_2 = math.factorial(N)**2
     Q = left_tensor.shape[0]
     idx_up = Q**N
+    QCN = math.factorial(Q) // math.factorial(N) // math.factorial(Q-N)
+    QPN = math.factorial(Q) // math.factorial(Q-N)
 
     # ランダムアクセスが必要、かつ、多次元配列のままだと遅いので、通常の一次元listを使用
-    tensor = [0.0+0.0j for _ in range(Q**(2*N))]
+    tensor_data = [None]*(QPN**2)
+    tensor_idx = [None]*(QPN**2)
     left_tensor_list = left_tensor.flatten().tolist()
     right_tensor_list = right_tensor.flatten().tolist()
 
@@ -146,11 +150,10 @@ def fast_wedge(left_tensor: np.ndarray,
     sign_adjustment = (-1)**(p*q)
 
     # 添え字についてソートされているものを代表元としてループを回す
+    i = 0
     for ipiq, jpjq in tqdm(product(combinations(range(Q), p+q),
                                    combinations(range(Q), p+q)),
-                           total=(math.factorial(Q)
-                                  // math.factorial(p+q)
-                                  // math.factorial(Q-(p+q)))**2,
+                           total=(QCN)**2,
                            disable=not verbose):
         parity_ipiq = _generate_parity_permutations(ipiq, fixed_N)
         parity_jpjq = _generate_parity_permutations(jpjq, fixed_N)
@@ -169,6 +172,11 @@ def fast_wedge(left_tensor: np.ndarray,
         for nipiq, i_parity in parity_ipiq:
             nipiq_idx = _getIdx(Q, *nipiq)*idx_up
             for njpjq, j_parity in parity_jpjq:
-                tensor[nipiq_idx+_getIdx(Q, *njpjq)] = ans*i_parity*j_parity
+                tensor_idx[i] = nipiq_idx+_getIdx(Q, *njpjq)
+                tensor_data[i] = ans*i_parity*j_parity
+                i += 1
 
-    return np.array(tensor).reshape(tuple(Q for _ in range(2*N)))
+    return coo_matrix((tensor_data, ([0]*len(tensor_data), tensor_idx)),
+                      shape=(1, Q**(2*N)), dtype=np.complex)\
+        .toarray()\
+        .reshape(tuple(Q for _ in range(2*N)))

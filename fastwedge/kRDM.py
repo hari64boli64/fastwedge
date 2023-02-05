@@ -37,26 +37,6 @@ def _make_jordan_wigners_mul_vec(Q: int, k: int, vec: np.ndarray,
         jordan_wigners_mul_vec[_getIdx(Q, *ps[::-1])] =\
             ans*((-1)**((k*(k-1)//2) % 2))
 
-    # # slow
-    # import scipy.sparse
-    # import openfermion
-    # # Create a list of raising and lowering operators for each orbital.
-    # jw_operators = []
-    # for tensor_factor in range(Q):
-    #     jw_operators.append(
-    #         openfermion.jordan_wigner_ladder_sparse(Q,
-    #                                                 tensor_factor,
-    #                                                 0).tocsr())
-    # n_hilbert = 2**Q
-    # for ps in combinations(range(Q)[::-1], k):
-    #     sparse_matrix = scipy.sparse.identity(n_hilbert,
-    #                                           dtype=complex,
-    #                                           format='csc')
-    #     for ladder_operator in ps:
-    #         sparse_matrix = sparse_matrix * jw_operators[ladder_operator]
-    #     assert np.allclose(jordan_wigners_mul_vec[_getIdx(Q, *ps)],
-    #                        sparse_matrix @ vec)
-
     return jordan_wigners_mul_vec
 
 
@@ -78,17 +58,19 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
     # 要請: k <= Q でなければならない(そうでなければ全て0)
     assert 1 <= k <= Q
 
-    fixed_k = _generate_fixed_parity_permutations(k)
     QCk = factorial(Q)//factorial(k)//factorial(Q-k)
     QPk = factorial(Q)//factorial(Q-k)
+
     rdm_data = [None]*(QPk**2)
     rdm_idx = [None]*(QPk**2)
+
+    fixed_k = _generate_fixed_parity_permutations(k)
 
     jordan_wigners_mul_vec = _make_jordan_wigners_mul_vec(Q, k, vec)
 
     idx_up = Q**k
-    i = 0
 
+    i = 0
     for ps, qs in tqdm(combinations(combinations(range(Q), k), 2),
                        total=QCk*(QCk-1)//2,
                        disable=not verbose):
@@ -118,7 +100,6 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
         gpp = _generate_parity_permutations(ps, fixed_k)
         for perm1, parity1 in gpp:
             val_p1 = val*parity1
-            val_conj_p1 = val_conj*parity1
             idx1 = _getIdx(Q, *perm1)
             for perm2, parity2 in gpp:
                 idx2 = _getIdx(Q, *perm2)
