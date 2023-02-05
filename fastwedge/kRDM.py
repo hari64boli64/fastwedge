@@ -1,6 +1,6 @@
 import numpy as np
 from math import factorial
-from scipy.sparse import csr_matrix, coo_matrix
+from scipy.sparse import csr_matrix
 from tqdm.notebook import tqdm
 from typing import Dict
 from itertools import combinations
@@ -59,10 +59,8 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
     assert 1 <= k <= Q
 
     QCk = factorial(Q)//factorial(k)//factorial(Q-k)
-    QPk = factorial(Q)//factorial(Q-k)
 
-    rdm_data = [0j]*(QPk**2)
-    rdm_idx = [0]*(QPk**2)
+    rdm = [0j]*(Q**(2*k))
 
     fixed_k = _generate_fixed_parity_permutations(k)
 
@@ -70,7 +68,6 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
 
     idx_up = Q**k
 
-    i = 0
     for ps, qs in tqdm(combinations(combinations(range(Q), k), 2),
                        total=QCk*(QCk-1)//2,
                        disable=not verbose):
@@ -85,12 +82,8 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
             idx1 = _getIdx(Q, *perm1)
             for perm2, parity2 in _generate_parity_permutations(qs, fixed_k):
                 idx2 = _getIdx(Q, *perm2)
-                rdm_idx[i] = idx1*idx_up+idx2
-                rdm_data[i] = val_p1*parity2
-                i += 1
-                rdm_idx[i] = idx2*idx_up+idx1
-                rdm_data[i] = val_conj_p1*parity2
-                i += 1
+                rdm[idx1*idx_up+idx2] = val_p1*parity2
+                rdm[idx2*idx_up+idx1] = val_conj_p1*parity2
 
     for ps in combinations(range(Q), k):
         bra = jordan_wigners_mul_vec[_getIdx(Q, *ps[::-1])]
@@ -103,11 +96,6 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
             idx1 = _getIdx(Q, *perm1)
             for perm2, parity2 in gpp:
                 idx2 = _getIdx(Q, *perm2)
-                rdm_idx[i] = idx1*idx_up+idx2
-                rdm_data[i] = val_p1*parity2
-                i += 1
+                rdm[idx1*idx_up+idx2] = val_p1*parity2
 
-    return coo_matrix((rdm_data, ([0]*len(rdm_data), rdm_idx)),
-                      shape=(1, Q**(2*k)), dtype=complex)\
-        .toarray()\
-        .reshape(tuple(Q for _ in range(2*k)))
+    return np.array(rdm).reshape(tuple(Q for _ in range(2*k)))
