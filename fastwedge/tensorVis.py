@@ -20,7 +20,8 @@ def __vis_subroutine(N: int,
     return params
 
 
-def __vis2dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
+def __vis2dTensorKarnaugh(tensor: np.ndarray, size: int,
+                          title: Union[str, None]):
     """2d tensor visualizer
 
     Args:
@@ -52,7 +53,8 @@ def __vis2dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
     plt.show()
 
 
-def __vis4dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
+def __vis4dTensorKarnaugh(tensor: np.ndarray, size: int,
+                          title: Union[str, None]):
     """4d tensor visualizer(Karnaugh)
 
     Args:
@@ -90,7 +92,8 @@ def __vis4dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
     plt.show()
 
 
-def __vis6dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
+def __vis6dTensorKarnaugh(tensor: np.ndarray, size: int,
+                          title: Union[str, None]):
     """6d tensor visualizer
 
     Args:
@@ -134,7 +137,8 @@ def __vis6dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
     plt.show()
 
 
-def __vis8dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
+def __vis8dTensorKarnaugh(tensor: np.ndarray, size: int,
+                          title: Union[str, None]):
     """8d tensor visualizer
 
     Args:
@@ -186,13 +190,14 @@ def __vis8dTensorKarnaugh(tensor: np.ndarray, size: int, title: str):
     plt.show()
 
 
-def visTensor(tensor: np.ndarray, size: int = 8, title: str = None):
+def visTensor(tensor: np.ndarray, size: int = 8,
+              title: Union[str, None] = None):
     """tensor visualizer
 
     Args:
         tensor (np.ndarray): target tensor
         size (int, optional): size of the output img. Defaults to 8.
-        title (str, optional): title of the fig. Defaults to None.
+        title (Union[str, None], optional): title of the fig. Defaults to None.
     """
     if tensor.ndim == 2:
         __vis2dTensorKarnaugh(tensor, size, title)
@@ -206,13 +211,14 @@ def visTensor(tensor: np.ndarray, size: int = 8, title: str = None):
         assert False, f"tensor.ndim must be 2,4,6, or 8, but is {tensor.ndim}"
 
 
-def vis4dTensorNest(tensor: np.ndarray, size: int = 8, title: str = None):
+def vis4dTensorNest(tensor: np.ndarray, size: int = 8,
+                    title: Union[str, None] = None):
     """4d tensor visualizer(Nest)
 
     Args:
         tensor (np.ndarray): target tensor
         size (int, optional): size of the output img. Defaults to 8.
-        title (str, optional): title of the fig. Defaults to None.
+        title (Union[str, None], optional): title of the fig. Defaults to None.
     """
     N = tensor.shape[0]
     assert len(tensor.shape) == 4, tensor.shape
@@ -244,13 +250,14 @@ def vis4dTensorNest(tensor: np.ndarray, size: int = 8, title: str = None):
     plt.show()
 
 
-def vis2dTensorReal(tensor: np.ndarray, size: int = 8, title: str = None):
+def vis2dTensorReal(tensor: np.ndarray, size: int = 8,
+                    title: Union[str, None] = None):
     """2d tensor visualizer of real
 
     Args:
         tensor (np.ndarray): target real tensor
         size (int, optional): size of the output img. Defaults to 8.
-        title (str, optional): title of the fig. Defaults to None.
+        title (Union[str, None], optional): title of the fig. Defaults to None.
     """
     N = tensor.shape[0]
     assert len(tensor.shape) == 2, tensor.shape

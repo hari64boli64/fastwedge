@@ -106,7 +106,7 @@ def fast_wedge_topM(left_tensor: np.ndarray,
                            total=(math.factorial(Q)
                                   // math.factorial(p+q)
                                   // math.factorial(Q-(p+q)))**2,
-                            disable=not verbose):
+                           disable=not verbose):
         # 代表元に当たる要素の計算
         ans = 0.0+0.0j
         for nip, niq, i_parity in _partial_perms(ipiq, fixed_Np):

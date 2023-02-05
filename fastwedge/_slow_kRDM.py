@@ -13,7 +13,7 @@ def expectation(operator, state):
             state
 
 
-def slow_compute_k_rdm(vector: np.ndarray, args: Tuple[int]) -> complex:
+def slow_compute_k_rdm(vector: np.ndarray, args: Tuple[int, ...]) -> complex:
     assert len(args) % 2 == 0
     cij = expectation(FermionOperator(
         ("".join(map(lambda p: f"{p}^ ", args[:len(args)//2]))

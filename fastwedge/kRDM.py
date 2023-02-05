@@ -61,8 +61,8 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
     QCk = factorial(Q)//factorial(k)//factorial(Q-k)
     QPk = factorial(Q)//factorial(Q-k)
 
-    rdm_data = [None]*(QPk**2)
-    rdm_idx = [None]*(QPk**2)
+    rdm_data = [0j]*(QPk**2)
+    rdm_idx = [0]*(QPk**2)
 
     fixed_k = _generate_fixed_parity_permutations(k)
 
@@ -108,6 +108,6 @@ def fast_compute_k_rdm(k: int, vec: np.ndarray,
                 i += 1
 
     return coo_matrix((rdm_data, ([0]*len(rdm_data), rdm_idx)),
-                      shape=(1, Q**(2*k)), dtype=np.complex)\
+                      shape=(1, Q**(2*k)), dtype=complex)\
         .toarray()\
         .reshape(tuple(Q for _ in range(2*k)))

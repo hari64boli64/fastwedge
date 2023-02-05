@@ -125,8 +125,8 @@ def fast_wedge(left_tensor: np.ndarray,
     QPN = math.factorial(Q) // math.factorial(Q-N)
 
     # ランダムアクセスが必要、かつ、多次元配列のままだと遅いので、通常の一次元listを使用
-    tensor_data = [None]*(QPN**2)
-    tensor_idx = [None]*(QPN**2)
+    tensor_data = [0j]*(QPN**2)
+    tensor_idx = [0]*(QPN**2)
     left_tensor_list = left_tensor.flatten().tolist()
     right_tensor_list = right_tensor.flatten().tolist()
 
@@ -177,6 +177,6 @@ def fast_wedge(left_tensor: np.ndarray,
                 i += 1
 
     return coo_matrix((tensor_data, ([0]*len(tensor_data), tensor_idx)),
-                      shape=(1, Q**(2*N)), dtype=np.complex)\
+                      shape=(1, Q**(2*N)), dtype=complex)\
         .toarray()\
         .reshape(tuple(Q for _ in range(2*N)))
